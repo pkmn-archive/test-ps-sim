@@ -1,5 +1,6 @@
 'use strict';
 
+const colors = require('colors/safe');
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
@@ -47,6 +48,13 @@ const p2 = new RandomPlayerAI(streams.p2);
 
 var stdin = new Streams.ReadStream(process.stdin);
 var stdout = new Streams.WriteStream(process.stdout);
+
+function write(s) {
+  stdout.write(colors.green(s));
+}
+function debug(s) {
+  stdout.write(colors.grey(s) + '\n\n');
+}
 
 streams.omniscient.write(`>start ${JSON.stringify(spec)}
 >player p1 ${JSON.stringify(p1spec)}
@@ -133,19 +141,19 @@ function getUntrackedMon(mon) {
 
 function displayActive(m1, m2) {
   var pad = 30;
-  stdout.write(`${m1.species}: ${m1.percentHP}% ${m1.status}(${m1.currentHP}/${m1.maxHP})`.padEnd(pad));
-  stdout.write(` ${m2.species}: ${m2.percentHP}% ${m2.status}(${m2.currentHP}/${m2.maxHP})\n`);
+  write(`${m1.species}: ${m1.percentHP}% ${m1.status}(${m1.currentHP}/${m1.maxHP})`.padEnd(pad));
+  write(` ${m2.species}: ${m2.percentHP}% ${m2.status}(${m2.currentHP}/${m2.maxHP})\n`);
   for (var i = 0; i < 4; i++) {
-    stdout.write(`  - ${m1.moves[i]}`.padEnd(pad))
-    stdout.write(`  - ${m2.moves[i]}\n`);
+    write(`  - ${m1.moves[i]}`.padEnd(pad))
+    write(`  - ${m2.moves[i]}\n`);
   }
 }
 
 function displayShort(m) {
   if (m) {
-    stdout.write(`${m.species}: ${m.percentHP}% ${m.status}(${m.currentHP}/${m.maxHP}) ${m.moves.join('/')}\n`);
+    write(`${m.species}: ${m.percentHP}% ${m.status}(${m.currentHP}/${m.maxHP}) ${m.moves.join('/')}\n`);
   } else {
-    stdout.write("???\n");
+    write("???\n");
   }
 }
 
@@ -184,14 +192,14 @@ function displayState(full) {
     for (var m of team1) {
       displayShort(m);
     }
-    stdout.write("---\n");
+    write("---\n");
     for (var m of team2) {
       displayShort(m);
     }
   } else {
     if (m1 && m2) {
       displayActive(m1, m2);
-      stdout.write("\n");
+      write("\n");
     }
   }
 
@@ -204,11 +212,11 @@ function displayState(full) {
     switch (chunk[0]) {
       case "!":
 		    streams.p1.write("move " + chunk.substring(1).trim());
-        stdout.write("\n");
+        write("\n");
         break;
       case "#":
 		    streams.p1.write("switch " + chunk.substring(1).trim());
-        stdout.write("\n");
+        write("\n");
         break;
       case "?":
         displayState(true);
@@ -216,7 +224,7 @@ function displayState(full) {
       default:
         if (chunk.startsWith("move ") || chunk.startsWith("switch ")) {
           streams.p1.write(chunk);
-          stdout.write("\n");
+          write("\n");
         }
       }
 	}
@@ -225,12 +233,12 @@ function displayState(full) {
 (async () => {
 	let chunk;
 	while ((chunk = await streams.p1.read())) {
-    console.error(chunk);
+    debug(chunk);
     if (chunk.startsWith('|error|')) {
-      stdout.write("\n" + chunk.substring(7) + "\n\n");
+      write("\n" + chunk.substring(7) + "\n\n");
     } else {
       if (!chunk.startsWith('|request|')) {
-        stdout.write(state.parser.parse(chunk));
+        write(state.parser.parse(chunk));
       } else {
         state.request = JSON.parse(chunk.substring(9));
       }
