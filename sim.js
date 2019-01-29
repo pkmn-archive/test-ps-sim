@@ -49,6 +49,9 @@ const p2 = new RandomPlayerAI(streams.p2);
 var stdin = new Streams.ReadStream(process.stdin);
 var stdout = new Streams.WriteStream(process.stdout);
 
+function error(s) {
+  stdout.write(colors.red(s));
+}
 function write(s) {
   stdout.write(colors.green(s));
 }
@@ -233,14 +236,15 @@ function displayState(full) {
 (async () => {
 	let chunk;
 	while ((chunk = await streams.p1.read())) {
-    debug(chunk);
     if (chunk.startsWith('|error|')) {
-      write("\n" + chunk.substring(7) + "\n\n");
+      error("\n" + chunk.substring(7) + "\n\n");
     } else {
       if (!chunk.startsWith('|request|')) {
+        debug(chunk);
         write(state.parser.parse(chunk));
       } else {
         state.request = JSON.parse(chunk.substring(9));
+        debug(JSON.stringify(state.request, null, 2));
       }
       displayState(false);
     }
