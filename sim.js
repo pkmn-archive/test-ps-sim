@@ -20,7 +20,7 @@ function untildify(s) {
 }
 
 
-var validator = TeamValidator("gen7ag");
+var validator = TeamValidator("gen7uber");
 function importTeamFile(f) {
   var team = Dex.fastUnpackTeam(importTeam(fs.readFileSync(path.resolve(__dirname, untildify(f)), "utf8")));
   var result = validator.validateTeam(team);
@@ -32,7 +32,7 @@ function importTeamFile(f) {
 }
 
 const spec = {
-	formatid: "gen7ag",
+	formatid: "gen7uber",
 };
 const p1spec = {
 	name: "Player",
@@ -40,7 +40,7 @@ const p1spec = {
 };
 const p2spec = {
 	name: "Bot",
-	team: (process.argv[3] ? importTeamFile(process.argv[3]) : Dex.generateTeam('gen7ag')),
+	team: (process.argv[3] ? importTeamFile(process.argv[3]) : Dex.generateTeam('gen7uber')),
 };
 
 const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream());
