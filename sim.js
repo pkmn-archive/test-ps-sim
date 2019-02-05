@@ -87,6 +87,10 @@ state.parser = new Parser();
       case "?":
         displayState(true, true);
         break;
+      case "%":
+        streams.p1.write('%DEBUG');
+        write("\n");
+        break;
       default:
         if (chunk.startsWith("move ") || chunk.startsWith("switch ")) {
           streams.p1.write(chunk);
