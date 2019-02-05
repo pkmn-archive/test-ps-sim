@@ -6,13 +6,13 @@ const path = require('path');
 const os = require('os');
 
 // TODO use linked psim instead
-const Dex = require('../../Pokemon-Showdown/sim/dex');
-const BattleStreams = require('../../Pokemon-Showdown/sim/battle-stream');
+const Dex = require('../Pokemon-Showdown/sim/dex');
+const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
 const RandomPlayerAI = require('./random-ai');
-const Streams = require('../../Pokemon-Showdown/lib/streams');
+const Streams = require('../Pokemon-Showdown/lib/streams');
 const Parser = require('./parser');
 const importTeam = require('./import');
-var TeamValidator = require('../../Pokemon-Showdown/sim/team-validator');
+var TeamValidator = require('../Pokemon-Showdown/sim/team-validator');
 
 const home = os.homedir();
 function untildify(s) {

@@ -1,6 +1,6 @@
 'use strict';
 
-const BattleStreams = require('../../Pokemon-Showdown/sim/battle-stream');
+const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
 
 /*********************************************************************
  * Helper functions

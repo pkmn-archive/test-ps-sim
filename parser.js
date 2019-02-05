@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const psc = path.resolve(__dirname, '../../Pokemon-Showdown-Client');
+const psc = path.resolve(__dirname, '../Pokemon-Showdown-Client');
 
 window = global;
 {

@@ -1,8 +1,8 @@
 'use strict';
 
-var Dex = require('../../Pokemon-Showdown/sim/dex');
-var BattleTypeChart = require('../../Pokemon-Showdown/data/typechart').BattleTypeChart;
-var Streams = require('../../Pokemon-Showdown/lib/streams');
+var Dex = require('../Pokemon-Showdown/sim/dex');
+var BattleTypeChart = require('../Pokemon-Showdown/data/typechart').BattleTypeChart;
+var Streams = require('../Pokemon-Showdown/lib/streams');
 var stdin = new Streams.ReadStream(process.stdin);
 
 var toId = Dex.getId;
