@@ -1,53 +1,113 @@
 'use strict';
 
-const colors = require('colors/safe');
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
 
+const colors = require('colors/safe');
+const pkmn = require('pkmn');
+
 // TODO use linked psim instead
-const Dex = require('../Pokemon-Showdown/sim/dex');
 const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
-const RandomPlayerAI = require('./random-ai');
 const Streams = require('../Pokemon-Showdown/lib/streams');
+const TeamValidator = require('../Pokemon-Showdown/sim/team-validator');
+
+const RandomPlayerAI = require('./random-ai');
 const Parser = require('./parser');
-const importTeam = require('./import');
-var TeamValidator = require('../Pokemon-Showdown/sim/team-validator');
+
+const FORMAT = 'gen7uber';
 
 const home = os.homedir();
 function untildify(s) {
   return home ? s.replace(/^~(?=$|\/|\\)/, home) : s;
 }
 
-
-var validator = TeamValidator("gen7uber");
+const validator = TeamValidator(FORMAT);
 function importTeamFile(f) {
-  var team = Dex.fastUnpackTeam(importTeam(fs.readFileSync(path.resolve(__dirname, untildify(f)), "utf8")));
-  var result = validator.validateTeam(team);
+  const team = pkmn.Team.import(
+      fs.readFileSync(path.resolve(__dirname, untildify(f)), "utf8"));
+  const result = validator.validateTeam(team.team);
   if (result) {
     console.error(result.join('\n'));
     process.exit(1);
   }
-  return Dex.packTeam(team);
+  return team.pack();
 }
 
 const spec = {
-	formatid: "gen7uber",
+  formatid: FORMAT
 };
 const p1spec = {
-	name: "Player",
-	team: importTeamFile(process.argv[2]),
+  name: "Player",
+  team: importTeamFile(process.argv[2])
 };
 const p2spec = {
-	name: "Bot",
-	team: (process.argv[3] ? importTeamFile(process.argv[3]) : Dex.generateTeam('gen7uber')),
+  name: "Bot",
+  team: importTeamFile(process.argv[3])
 };
 
-const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream());
+const streams = BattleStreams.getPlayerStreams(
+    new BattleStreams.BattleStream());
 const p2 = new RandomPlayerAI(streams.p2);
 
-var stdin = new Streams.ReadStream(process.stdin);
-var stdout = new Streams.WriteStream(process.stdout);
+const stdin = new Streams.ReadStream(process.stdin);
+const stdout = new Streams.WriteStream(process.stdout);
+
+streams.omniscient.write(`>start ${JSON.stringify(spec)}
+>player p1 ${JSON.stringify(p1spec)}
+>player p2 ${JSON.stringify(p2spec)}`);
+
+const state = {};
+state.parser = new Parser();
+
+(async () => {
+  let chunk;
+  while ((chunk = await stdin.read())) {
+    chunk = chunk.trim();
+    switch (chunk[0]) {
+      case "!":
+        streams.p1.write("move " + chunk.substring(1).trim());
+        write("\n");
+        break;
+      case "#":
+        streams.p1.write("switch " + chunk.substring(1).trim());
+        write("\n");
+        break;
+      case "?":
+        displayState(true, true);
+        break;
+      default:
+        if (chunk.startsWith("move ") || chunk.startsWith("switch ")) {
+          streams.p1.write(chunk);
+          write("\n");
+        }
+    }
+  }
+})();
+
+(async () => {
+  let chunk;
+  while ((chunk = await streams.p1.read())) {
+    if (chunk.startsWith('|error|')) {
+      error("\n" + chunk.substring(7) + "\n\n");
+    } else {
+      if (!chunk.startsWith('|request|')) {
+        debug(chunk);
+        write(state.parser.parse(chunk));
+      } else {
+        state.request = JSON.parse(chunk.substring(9));
+        //debug(JSON.stringify(state.request, null, 2));
+      }
+
+      if (chunk.startsWith('|player|') || chunk.startsWith('|\n')) {
+        if (state.request.forceSwitch) write('\n');
+        displayState(state.request.forceSwitch);
+      }
+    }
+  }
+})();
+
+////////////////////// DISPLAY ////////////////////////////
 
 function error(s) {
   stdout.write(colors.red(s));
@@ -59,15 +119,8 @@ function debug(s) {
   stdout.write(colors.grey(s) + '\n\n');
 }
 
-streams.omniscient.write(`>start ${JSON.stringify(spec)}
->player p1 ${JSON.stringify(p1spec)}
->player p2 ${JSON.stringify(p2spec)}`);
-
-var state = {};
-state.parser = new Parser();
-
 function findInTrackedMove(move, trackedMoves) {
-  for (var pair of trackedMoves) {
+  for (const pair of trackedMoves) {
     if (move.name === pair[0]) {
       return pair[1];
     }
@@ -76,17 +129,17 @@ function findInTrackedMove(move, trackedMoves) {
 }
 
 function getTrackedMon(mon, allMoves) {
-  var currentHP = mon.hp;
-  var maxHP = mon.maxhp;
-  var percentHP = Math.round((currentHP / maxHP) * 100);
+  const currentHP = mon.hp;
+  const maxHP = mon.maxhp;
+  const percentHP = Math.round((currentHP / maxHP) * 100);
 
-  var status = mon.status ? mon.status.toUpperCase() + ' ' : '';
+  const status = mon.status ? mon.status.toUpperCase() + ' ' : '';
 
-  var moves = [];
+  const moves = [];
   if (allMoves) {
-    for (var move of allMoves) {
-      var m = Dex.getMove(move);
-      var usedPP = findInTrackedMove(m, mon.moveTrack);
+    for (const move of allMoves) {
+      const m = pkmn.Moves.get(move);
+      const usedPP = findInTrackedMove(m, mon.moveTrack);
 
       if (usedPP > 0) {
         moves.push(`${m.name} (${m.pp - usedPP}/${m.pp})`);
@@ -95,8 +148,8 @@ function getTrackedMon(mon, allMoves) {
       }
     }
   } else {
-    for (var trackedMove of mon.moveTrack) {
-      var m = Dex.getMove(trackedMove[0]);
+    for (const trackedMove of mon.moveTrack) {
+      const m = pkmn.Moves.get(trackedMove[0]);
       moves.push(`${m.name} (${m.pp - trackedMove[1]}/${m.pp})`);
     }
   }
@@ -116,19 +169,19 @@ function getTrackedMon(mon, allMoves) {
 }
 
 function getUntrackedMon(mon) {
-  var species = mon.details.split(",")[0];
-  var sp = mon.condition.split(" ");
+  const species = mon.details.split(",")[0];
+  const sp = mon.condition.split(" ");
 
-  var health = sp[0].split("/");
-  var currentHP = +health[0];
-  var maxHP = +health[1];
-  var percentHP = Math.round((currentHP / maxHP) * 100);
+  const health = sp[0].split("/");
+  const currentHP = +health[0];
+  const maxHP = +health[1];
+  const percentHP = Math.round((currentHP / maxHP) * 100);
 
-  var status = sp[1] ? sp[1].toUpperCase() + ' ' : '';
+  const status = sp[1] ? sp[1].toUpperCase() + ' ' : '';
 
-  var moves = [];
-  for (var move of mon.moves) {
-    var m = Dex.getMove(move);
+  const moves = [];
+  for (const move of mon.moves) {
+    const m = pkmn.Moves.get(move);
     moves.push(`${m.name}`);
   }
 
@@ -143,12 +196,12 @@ function getUntrackedMon(mon) {
 }
 
 function displayActive(m1, m2) {
-  var pad = 30;
+  const pad = 30;
   write(`${m1.species}: ${m1.percentHP}% ${m1.status}(${m1.currentHP}/${m1.maxHP})`.padEnd(pad));
   write(` ${m2.species}: ${m2.percentHP}% ${m2.status}(${m2.currentHP}/${m2.maxHP})\n`);
-  for (var i = 0; i < 4; i++) {
+  for (let i = 0; i < 4; i++) {
     write(`  - ${m1.moves[i]}`.padEnd(pad))
-    write(`  - ${m2.moves[i]}\n`);
+        write(`  - ${m2.moves[i]}\n`);
   }
 }
 
@@ -160,13 +213,13 @@ function displayShort(m) {
   }
 }
 
-function displayState(full) {
-  var m, m1, m2;
-  var team1 = [];
-  var team2 = [];
+function displayState(full, both) {
+  let m, m1, m2;
+  const team1 = [];
+  const team2 = [];
 
-  for (var mon of state.request.side.pokemon) {
-    var tracked = state.parser.battle.getPokemon(mon.ident);
+  for (const mon of state.request.side.pokemon) {
+    const tracked = state.parser.battle.getPokemon(mon.ident);
     if (tracked) {
       m = getTrackedMon(tracked, mon.moves);
       if (tracked.isActive()) {
@@ -178,8 +231,8 @@ function displayState(full) {
     team1.push(m);
   }
 
-  for (var i = 0; i < state.parser.battle.p2.totalPokemon; i++) {
-    var tracked = state.parser.battle.p2.pokemon[i];
+  for (let i = 0; i < state.parser.battle.p2.totalPokemon; i++) {
+    const tracked = state.parser.battle.p2.pokemon[i];
     if (tracked) {
       m = getTrackedMon(tracked);
       if (tracked.isActive()) {
@@ -192,61 +245,20 @@ function displayState(full) {
   }
 
   if (full) {
-    for (var m of team1) {
+    for (const m of team1) {
       displayShort(m);
     }
-    write("---\n");
-    for (var m of team2) {
-      displayShort(m);
+    if (both) {
+      write("---\n");
+      for (const m of team2) {
+        displayShort(m);
+      }
     }
+    write("\n");
   } else {
     if (m1 && m2) {
       displayActive(m1, m2);
       write("\n");
     }
   }
-
 }
-
-(async () => {
-	let chunk;
-	while ((chunk = await stdin.read())) {
-    chunk = chunk.trim();
-    switch (chunk[0]) {
-      case "!":
-		    streams.p1.write("move " + chunk.substring(1).trim());
-        write("\n");
-        break;
-      case "#":
-		    streams.p1.write("switch " + chunk.substring(1).trim());
-        write("\n");
-        break;
-      case "?":
-        displayState(true);
-        break;
-      default:
-        if (chunk.startsWith("move ") || chunk.startsWith("switch ")) {
-          streams.p1.write(chunk);
-          write("\n");
-        }
-      }
-	}
-})();
-
-(async () => {
-	let chunk;
-	while ((chunk = await streams.p1.read())) {
-    if (chunk.startsWith('|error|')) {
-      error("\n" + chunk.substring(7) + "\n\n");
-    } else {
-      if (!chunk.startsWith('|request|')) {
-        debug(chunk);
-        write(state.parser.parse(chunk));
-      } else {
-        state.request = JSON.parse(chunk.substring(9));
-        debug(JSON.stringify(state.request, null, 2));
-      }
-      displayState(false);
-    }
-	}
-})();
