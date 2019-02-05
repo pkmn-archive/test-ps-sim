@@ -21,6 +21,10 @@ const MEGA = 0.8;
 const SWITCH = 0.3;
 
 class RandomPlayerAI extends BattleStreams.BattlePlayer {
+  constructor(stream, script) {
+    super(stream);
+    this.script = script;
+  }
   /**
    * @param {AnyObject} request
    */
@@ -28,6 +32,8 @@ class RandomPlayerAI extends BattleStreams.BattlePlayer {
     if (request.wait) {
       // wait request
       // do nothing
+    } else if (this.script.length) {
+      this.choose(this.script.shift());
     } else if (request.forceSwitch) {
       // switch request
       const pokemon = request.side.pokemon;

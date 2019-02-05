@@ -46,9 +46,20 @@ const p2spec = {
   team: importTeamFile(process.argv[3])
 };
 
+const scriptP1 = [];
+const scriptP2 = [];
+if (process.argv[4]) {
+  const turns = fs.readFileSync(
+          path.resolve(__dirname, untildify(process.argv[4])), "utf8").split('\n');
+  for (const turn of turns) {
+    const script = turn.startsWith('p1') ? scriptP1 : scriptP2;
+    if (turn) script.push(turn.slice(3));
+  }
+}
+
 const streams = BattleStreams.getPlayerStreams(
     new BattleStreams.BattleStream());
-const p2 = new RandomPlayerAI(streams.p2);
+const p2 = new RandomPlayerAI(streams.p2, scriptP2);
 
 const stdin = new Streams.ReadStream(process.stdin);
 const stdout = new Streams.WriteStream(process.stdout);
@@ -103,6 +114,8 @@ state.parser = new Parser();
         if (state.request.forceSwitch) write('\n');
         displayState(state.request.forceSwitch);
       }
+
+      if (scriptP1.length && !chunk.startsWith('|player|')) streams.p1.write(scriptP1.shift());
     }
   }
 })();
