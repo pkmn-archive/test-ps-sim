@@ -83,7 +83,10 @@ function onChunk(chunk) {
     state.battle.add(line);
     state.battle.fastForwardTo(-1);
   }
-  return output;
+
+  return output.replace(/\[(.*)\]/g, (m, g) => colors.italic(g))
+               .replace(/\*\*(.*)\*\*/g, (m, g) => colors.bold(g))
+               .replace(/==.*==/g, (m) => colors.bold(m));
 }
 
 (async () => {
