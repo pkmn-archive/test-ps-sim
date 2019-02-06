@@ -17,6 +17,7 @@ const TeamValidator = psim.TeamValidator;
 
 const RandomPlayerAI = require('./random-ai');
 const Parser = require('./parser');
+const Battle = require('./battle');
 
 const FORMAT = 'gen7uber';
 
@@ -73,6 +74,7 @@ streams.omniscient.write(`>start ${JSON.stringify(spec)}
 
 const state = {};
 state.parser = new Parser();
+state.battle = new Battle();
 
 (async () => {
   let chunk;
@@ -112,6 +114,7 @@ state.parser = new Parser();
       if (!chunk.startsWith('|request|')) {
         debug(chunk);
         write(state.parser.parse(chunk));
+        updateBattle(state.battle, chunk);
       } else {
         state.request = JSON.parse(chunk.substring(9));
         //debug(JSON.stringify(state.request, null, 2));
@@ -239,7 +242,7 @@ function displayState(full, both) {
   const team2 = [];
 
   for (const mon of state.request.side.pokemon) {
-    const tracked = state.parser.battle.getPokemon(mon.ident);
+    const tracked = state.battle.getPokemon(mon.ident);
     if (tracked) {
       m = getTrackedMon(tracked, mon.moves);
       if (tracked.isActive()) {
@@ -251,8 +254,8 @@ function displayState(full, both) {
     team1.push(m);
   }
 
-  for (let i = 0; i < state.parser.battle.p2.totalPokemon; i++) {
-    const tracked = state.parser.battle.p2.pokemon[i];
+  for (let i = 0; i < state.battle.p2.totalPokemon; i++) {
+    const tracked = state.battle.p2.pokemon[i];
     if (tracked) {
       m = getTrackedMon(tracked);
       if (tracked.isActive()) {
@@ -280,5 +283,12 @@ function displayState(full, both) {
       displayActive(m1, m2);
       write("\n");
     }
+  }
+}
+
+function updateBattle(battle, chunk) {
+  for (var line of chunk.split('\n')) {
+    battle.add(line);
+    battle.fastForwardTo(-1);
   }
 }
