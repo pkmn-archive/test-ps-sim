@@ -7,16 +7,15 @@ const os = require('os');
 const colors = require('colors/safe');
 const pkmn = require('pkmn');
 const psim = require('ps-sim');
+const psv = require('PSV');
 
-//const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
-//const Streams = require('../Pokemon-Showdown/lib/streams');
-//const TeamValidator = require('../Pokemon-Showdown/sim/team-validator');
 const BattleStreams = psim.BattleStreams;
 const Streams = psim.Streams;
 const TeamValidator = psim.TeamValidator;
 
+const Parser = psv.Parser;
+
 const RandomPlayerAI = require('./random-ai');
-const Parser = require('./parser');
 const Battle = require('./battle');
 
 const FORMAT = 'gen7uber';
@@ -76,6 +75,17 @@ const state = {};
 state.parser = new Parser();
 state.battle = new Battle();
 
+function onChunk(chunk) {
+  var output = '';
+  for (var line of chunk.split('\n')) {
+    output += (state.parser.extractMessage(line) || '');
+
+    state.battle.add(line);
+    state.battle.fastForwardTo(-1);
+  }
+  return output;
+}
+
 (async () => {
   let chunk;
   while ((chunk = await stdin.read())) {
@@ -113,8 +123,7 @@ state.battle = new Battle();
     } else {
       if (!chunk.startsWith('|request|')) {
         debug(chunk);
-        write(state.parser.parse(chunk));
-        updateBattle(state.battle, chunk);
+        write(onChunk(chunk));
       } else {
         state.request = JSON.parse(chunk.substring(9));
         //debug(JSON.stringify(state.request, null, 2));
@@ -286,9 +295,3 @@ function displayState(full, both) {
   }
 }
 
-function updateBattle(battle, chunk) {
-  for (var line of chunk.split('\n')) {
-    battle.add(line);
-    battle.fastForwardTo(-1);
-  }
-}
