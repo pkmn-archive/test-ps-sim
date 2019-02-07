@@ -1,9 +1,41 @@
-p1 team 3 
+p1 team 3
 p2 team 4
+
 p1 move Swords Dance
 p2 switch Smeargle
+
 p1 move Baton Pass
 p2 move Grassy Terrain
 p1 switch Alakazam
+
 p1 move Trick Room mega
 p2 move Spikes
+
+p1 switch Castform
+p2 switch Mew
+
+p1 move Future Sight
+p2 move Roar
+
+p1 switch Castform
+p2 switch Politoed
+
+p1 move Sunny Day zmove
+p2 move Scald zmove
+
+p1 switch Zoroark
+p2 switch Gastrodon
+
+p1 move U-turn
+p1 switch Meloetta
+p2 move Earthquake
+p2 switch Mew
+
+p1 move Light Screen
+p2 switch Gastrodon
+
+p1 move Gravity
+p2 move Block
+
+p1 move Relic Song
+p2 move Stockpile

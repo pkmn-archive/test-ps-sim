@@ -55,11 +55,17 @@ const p2spec = {
 const scriptP1 = [];
 const scriptP2 = [];
 if (process.argv[4]) {
-  const turns = fs.readFileSync(
+  const script = fs.readFileSync(
           path.resolve(__dirname, untildify(process.argv[4])), "utf8").split('\n');
-  for (const turn of turns) {
-    const script = turn.startsWith('p1') ? scriptP1 : scriptP2;
-    if (turn) script.push(turn.slice(3));
+  let turn = 0;
+  for (const line of script) {
+    if (!line.trim().length) {
+      turn++;
+      continue;
+    }
+
+    const script = line.startsWith('p1') ? scriptP1 : scriptP2;
+    script.push([turn, line.slice(3)]);
   }
 }
 
@@ -77,6 +83,7 @@ streams.omniscient.write(`>start ${JSON.stringify(spec)}
 const state = {};
 state.parser = new Parser();
 state.battle = new Battle();
+
 
 function onChunk(chunk) {
   var output = '';
@@ -140,7 +147,13 @@ function onChunk(chunk) {
         displayState(state.request.forceSwitch);
       }
 
-      if (scriptP1.length && !chunk.startsWith('|player|')) streams.p1.write(scriptP1.shift());
+      if (scriptP1.length &&
+          !chunk.startsWith('|player|') &&
+          !state.request.wait &&
+          scriptP1[0][0] === state.battle.turn) {
+        const choice = scriptP1.shift()[1];
+        streams.p1.write(choice);
+      }
     }
   }
 })();

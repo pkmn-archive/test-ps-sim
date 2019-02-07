@@ -34,7 +34,8 @@ class RandomPlayerAI extends BattleStreams.BattlePlayer {
       // wait request
       // do nothing
     } else if (this.script.length) {
-      this.choose(this.script.shift());
+      const choice = this.script.shift()[1];
+      this.choose(choice);
     } else if (request.forceSwitch) {
       // switch request
       const pokemon = request.side.pokemon;
