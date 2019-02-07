@@ -21,7 +21,7 @@ const Parser = psv.Parser;
 const RandomPlayerAI = require('./random-ai');
 const Battle = require('./battle');
 
-const FORMAT = 'gen7uber';
+const FORMAT = 'gen7anythinggoes';
 
 const home = os.homedir();
 function untildify(s) {
@@ -113,7 +113,7 @@ function onChunk(chunk) {
         write("\n");
         break;
       default:
-        if (chunk.startsWith("move ") || chunk.startsWith("switch ")) {
+        if (chunk.startsWith("move ") || chunk.startsWith("switch ") || chunk.startsWith("team ")) {
           streams.p1.write(chunk);
           write("\n");
         }

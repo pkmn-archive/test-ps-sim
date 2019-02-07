@@ -1,13 +1,3 @@
-Mew @ Rocky Helmet  
-Ability: Synchronize  
-EVs: 248 HP / 8 Def / 252 SpD  
-Calm Nature  
-IVs: 0 Atk  
-- Transform  
-- Baton Pass  
-- Worry Seed  
-- Swords Dance  
-
 Zoroark @ Float Stone  
 Ability: Illusion  
 EVs: 252 Atk / 4 SpD / 252 Spe  
@@ -25,6 +15,16 @@ Careful Nature
 - Protect  
 - Explosion  
 - Multi-Attack  
+
+Mew @ Rocky Helmet  
+Ability: Synchronize  
+EVs: 248 HP / 8 Def / 252 SpD  
+Calm Nature  
+IVs: 0 Atk  
+- Transform  
+- Baton Pass  
+- Worry Seed  
+- Swords Dance  
 
 Alakazam @ Alakazite  
 Ability: Magic Guard  

@@ -1,13 +1,3 @@
-Aegislash @ Sticky Barb  
-Ability: Stance Change  
-EVs: 252 HP / 4 SpA / 252 SpD  
-Calm Nature  
-IVs: 0 Atk  
-- Rest  
-- Autotomize  
-- King's Shield  
-- Hyper Beam  
-
 Smeargle @ Terrain Extender  
 Ability: Moody  
 EVs: 252 HP / 4 Atk / 252 Spe  
@@ -34,6 +24,16 @@ Careful Nature
 - Earthquake  
 - Stockpile  
 - Block  
+
+Aegislash @ Sticky Barb  
+Ability: Stance Change  
+EVs: 252 HP / 4 SpA / 252 SpD  
+Calm Nature  
+IVs: 0 Atk  
+- Rest  
+- Autotomize  
+- King's Shield  
+- Hyper Beam  
 
 Mew @ Lum Berry  
 Ability: Synchronize  
