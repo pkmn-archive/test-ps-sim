@@ -6,12 +6,15 @@ const os = require('os');
 
 const colors = require('colors/safe');
 const pkmn = require('pkmn');
-const psim = require('ps-sim');
 const psv = require('PSV');
 
-const BattleStreams = psim.BattleStreams;
-const Streams = psim.Streams;
-const TeamValidator = psim.TeamValidator;
+//const psim = require('ps-sim');
+//const BattleStreams = psim.BattleStreams;
+//const Streams = psim.Streams;
+//const TeamValidator = psim.TeamValidator;
+const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
+const Streams = require('../Pokemon-Showdown/lib/streams');
+const TeamValidator = require('../Pokemon-Showdown/sim/team-validator');
 
 const Parser = psv.Parser;
 

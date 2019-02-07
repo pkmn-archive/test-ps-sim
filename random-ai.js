@@ -1,6 +1,7 @@
 'use strict';
 
-const BattleStreams = require('ps-sim').BattleStreams;
+//const BattleStreams = require('ps-sim').BattleStreams;
+const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
 
 /*********************************************************************
  * Helper functions
