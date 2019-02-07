@@ -39,3 +39,9 @@ p2 move Block
 
 p1 move Relic Song
 p2 move Stockpile
+
+p1 switch Mew
+p2 switch Politoed
+
+p1 move Transform
+p2 move Hypnosis
