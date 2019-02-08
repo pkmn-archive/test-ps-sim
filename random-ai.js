@@ -22,14 +22,29 @@ const MEGA = 0.8;
 const SWITCH = 0.3;
 
 class RandomPlayerAI extends BattleStreams.BattlePlayer {
-  constructor(stream, script) {
+  constructor(stream, script = []) {
     super(stream);
     this.script = script;
+    this.numFailures = 0;
   }
+
+  receiveLine(line) {
+    try {
+      super.receiveLine(line);
+      this.numFailures = 0;
+    } catch (e) {
+      this.numFailures++;
+      if (this.numFailures < 10) {
+        this.receiveRequest(this.lastRequest);
+      }
+    }
+  }
+
   /**
    * @param {AnyObject} request
    */
   receiveRequest(request) {
+    this.lastRequest = request;
     if (request.wait) {
       // wait request
       // do nothing
@@ -37,7 +52,6 @@ class RandomPlayerAI extends BattleStreams.BattlePlayer {
       const choice = this.script.shift()[1];
       this.choose(choice);
     } else if (request.forceSwitch) {
-      // switch request
       const pokemon = request.side.pokemon;
       let chosen = /** @type {number[]} */ ([]);
       const choices = request.forceSwitch.map((/** @type {AnyObject} */ mustSwitch) => {
@@ -59,44 +73,64 @@ class RandomPlayerAI extends BattleStreams.BattlePlayer {
 
       this.choose(choices.join(`, `));
     } else if (request.active) {
+
+      let canMegaEvo = true;
       // move request
+      const chosen = /** @type {number[]} */ ([]);
       const choices = request.active.map((/** @type {AnyObject} */ pokemon, /** @type {number} */ i) => {
         if (request.side.pokemon[i].condition.endsWith(` fnt`)) return `pass`;
 
-        let canMegaEvo = pokemon.canMegaEvo;
+        canMegaEvo = canMegaEvo && pokemon.canMegaEvo;
 
         let canMove = [1, 2, 3, 4].slice(0, pokemon.moves.length);
         canMove = canMove.filter(i => (
             // not disabled
               !pokemon.moves[i - 1].disabled
               ));
-        // BUG: Not really all possible, because we should also chose possible
-        // targets as well, but thats not important in singles.
-        const moves = canMove.map(i => {
+
+        const moves = canMove.map(j => {
           // TODO: zMove?
-          const targetable = request.active.length > 1 && ['normal', 'any'].includes(pokemon.moves[i - 1].target);
-          const target = targetable ? ` ${1 + Math.floor(Math.random() * 2)}` : ``;
-          return `move ${i}${target}`;
+          if (request.active.length > 1) {
+            const target = pokemon.moves[j - 1].target;
+            if (['normal', 'any'].includes(target)) {
+              return `move ${j} ${1 + Math.floor(Math.random() * 2)}`;
+            }
+            if (['adjacentAlly'].includes(target)) {
+              return `move ${j} ${2 - i + 1}`;
+            }
+          }
+          return `move ${j}`;
+
         });
 
-        pokemon = request.side.pokemon;
+        const team = request.side.pokemon;
 
-        // BUG: Breaks in doubles because of simulataneous switch
         let canSwitch = [1, 2, 3, 4, 5, 6];
         canSwitch = canSwitch.filter(i => (
             // not active
-              !pokemon[i - 1].active &&
+              !team[i - 1].active &&
+              // not chosen for a simultaneous switch
+              !chosen.includes(i) &&
               // not fainted
-              !pokemon[i - 1].condition.endsWith(` fnt`)
+              !team[i - 1].condition.endsWith(` fnt`)
               ));
-        const switches = pokemon.trapped ? [] : canSwitch.map(target => `switch ${target}`);
+        // TODO: try choice, otherwise redo?
+        const switches = (pokemon.trapped || pokemon.maybeTrapped) ? [] : canSwitch.map(target => target);
 
         if (Math.random() < SWITCH && switches.length) {
-          return randomElem(switches);
+          let target = randomElem(switches);
+          chosen.push(target);
+          return `switch ${target}`;
         } else {
           let move = randomElem(moves);
-          // BUG: breaks in doubles where multiple could try to mega.
-          return Math.random() < MEGA && canMegaEvo ? `${move} mega` : move;
+          // TODO: For some reason Mega while selecting a target doesn't work?
+          if (move.split(' ').length > 2) return move;
+          if (Math.random() < MEGA && canMegaEvo) {
+            canMegaEvo = false;
+            return `${move} mega`;
+          } else {
+            return move;
+          }
         }
       });
       this.choose(choices.join(`, `));
