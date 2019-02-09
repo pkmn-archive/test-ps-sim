@@ -13,8 +13,8 @@ function randomElem(array) {
 }
 
 const NUM_GAMES = Number(process.argv[2]) || 100;
-const SILENT = process.argv[3] || true;
-const PARALLEL = process.argv[4] || true;
+const LOGS = process.argv[3] == 'true';
+const SEQUENTIAL = process.argv[4] == 'true';
 
 const FORMATS = [
     'gen7randombattle', //'gen7randomdoublesbattle',
@@ -49,7 +49,7 @@ async function runGame(format) {
 
     let chunk;
     while ((chunk = await streams.omniscient.read())) {
-      if (SILENT) continue;
+      if (!LOGS) continue;
 
       var output = '';
       for (var line of chunk.split('\n')) {
@@ -66,7 +66,7 @@ async function runGame(format) {
     return time;
 }
 
-if (PARALLEL) {
+if (!SEQUENTIAL) {
   (async () => {
     const timesP = [];
     for (let i = 0; i < NUM_GAMES; i++) {
