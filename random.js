@@ -17,7 +17,7 @@ function randomElem(array) {
 const NUM_GAMES = Number(process.argv[2]) || 100;
 const SILENT = true;
 const SEQUENTIAL = true;
-const RANDOM = true;
+const RANDOM = false;
 
 const FORMATS = [
     'gen7randombattle', //'gen7randomdoublesbattle',

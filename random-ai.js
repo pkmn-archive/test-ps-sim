@@ -28,17 +28,17 @@ class RandomPlayerAI extends BattleStreams.BattlePlayer {
     this.numFailures = 0;
   }
 
-  receiveLine(line) {
-    try {
-      super.receiveLine(line);
-      this.numFailures = 0;
-    } catch (e) {
-      this.numFailures++;
-      if (this.numFailures < 10) {
-        this.receiveRequest(this.lastRequest);
-      }
-    }
-  }
+  //receiveLine(line) {
+    //try {
+      //super.receiveLine(line);
+      //this.numFailures = 0;
+    //} catch (e) {
+      //this.numFailures++;
+      //if (this.numFailures < 10) {
+        //this.receiveRequest(this.lastRequest);
+      //}
+    //}
+  //}
 
   /**
    * @param {AnyObject} request
