@@ -27,8 +27,7 @@ const FORMATS = [
 
 async function runGame(format, timer) {
   let t = timer.time('prepare');
-  const begin = performance.now(); // TODO
-  const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream({}));
+  const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream({timer}));
 
   const spec = {
     formatid: format,
@@ -67,8 +66,6 @@ async function runGame(format, timer) {
         console.log(output);
   }
 
-  let time = performance.now() - begin; // TODO
-  console.log([format, start-begin, time]); // TODO
   return 1;
 }
 
