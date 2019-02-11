@@ -6,18 +6,15 @@ const colors = require('colors/safe');
 
 const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
 const Timer = require('../Pokemon-Showdown/sim/timer');
+const PRNG = require('../Pokemon-Showdown/sim/prng');
 const Dex = require('../Pokemon-Showdown/sim/dex');
 const RandomPlayerAI = require('./random-ai');
 const psv = require('PSV');
 
-function randomElem(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
 const NUM_GAMES = Number(process.argv[2]) || 100;
 const SILENT = true;
 const SEQUENTIAL = true;
-const RANDOM = false;
+const RANDOM = true;
 
 const FORMATS = [
     'gen7randombattle', //'gen7randomdoublesbattle',
@@ -69,13 +66,15 @@ async function runGame(format, timer) {
   return 1;
 }
 
+var prng = new PRNG();
+
 var format_ = 0;
 var numGames_ = 0;
 function getNextFormat() {
   if (format_ > FORMATS.length) {
     return false;
   } else if (numGames_++ < NUM_GAMES) {
-    return RANDOM ? randomElem(FORMATS) : FORMATS[format_];
+    return RANDOM ? prng.sample(FORMATS) : FORMATS[format_];
   } else if (RANDOM) {
     return false;
   } else {
@@ -92,13 +91,14 @@ function getNextFormat() {
 
   let format, lastFormat;
   while ((format = getNextFormat())) {
+    console.log(format);
     if (!RANDOM && lastFormat && format != lastFormat) {
       await Promise.all(games);
 
-      console.log(
-          `${lastFormat}: ${((performance.now() - begin)*1000).toFixed(2)}`);
-      console.log('===');
-      Timer.dump(timers);
+      //console.log(
+          //`${lastFormat}: ${((performance.now() - begin)*1000).toFixed(2)}`);
+      //console.log('===');
+      //Timer.dump(timers);
 
       timers = [];
       games = [];
@@ -117,8 +117,8 @@ function getNextFormat() {
   await Promise.all(games);
 
   const prefix = RANDOM ? 'ALL' : lastFormat;
-  console.log(`${prefix}: ${((performance.now() - begin)*1000).toFixed(2)}`);
-  console.log('===');
-  Timer.dump(timers);
+  //console.log(`${prefix}: ${((performance.now() - begin)*1000).toFixed(2)}`);
+  //console.log('===');
+  //Timer.dump(timers);
 })();
 
