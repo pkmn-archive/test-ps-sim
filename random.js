@@ -1,9 +1,11 @@
 'use strict';
 
+const { performance } = require('perf_hooks');
+
 const colors = require('colors/safe');
-const microtime = require('microtime')
 
 const BattleStreams = require('../Pokemon-Showdown/sim/battle-stream');
+//const Timer = require('../Pokemon-Showdown/sim/timer');
 const Dex = require('../Pokemon-Showdown/sim/dex');
 const RandomPlayerAI = require('./random-ai');
 const psv = require('PSV');
@@ -13,8 +15,9 @@ function randomElem(array) {
 }
 
 const NUM_GAMES = Number(process.argv[2]) || 100;
-const LOGS = process.argv[3] == 'true';
-const SEQUENTIAL = process.argv[4] == 'true';
+const SILENT = true;
+const SEQUENTIAL = true;
+const RANDOM = true;
 
 const FORMATS = [
     'gen7randombattle', //'gen7randomdoublesbattle',
@@ -23,7 +26,7 @@ const FORMATS = [
     'gen2randombattle', 'gen1randombattle' ];
 
 async function runGame(format) {
-    const begin = microtime.now();
+    const begin = performance.now();
     const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream());
 
     const spec = {
@@ -45,11 +48,11 @@ async function runGame(format) {
 >player p2 ${JSON.stringify(p2spec)}`);
 
     const parser = new psv.Parser();
-    const start = microtime.now();
+    const start = performance.now();
 
     let chunk;
     while ((chunk = await streams.omniscient.read())) {
-      if (!LOGS) continue;
+      if (SILENT) continue;
 
       var output = '';
       for (var line of chunk.split('\n')) {
@@ -61,30 +64,61 @@ async function runGame(format) {
       console.log(output);
     }
 
-    let time = microtime.now() - begin;
+    let time = performance.now() - begin;
     console.log([format, start-begin, time]);
     return time;
 }
 
-if (!SEQUENTIAL) {
-  (async () => {
-    const timesP = [];
-    for (let i = 0; i < NUM_GAMES; i++) {
-      const format = randomElem(FORMATS);
-      const time = runGame(format);
-      timesP.push(time);
-    }
-    const times = await Promise.all(timesP);
-    console.log(`AVG: ${times.reduce((p, c) => p + c)/times.length}`);
-  })();
-} else {
-  (async () => {
-    const times = [];
-    for (let i = 0; i < NUM_GAMES; i++) {
-      const format = randomElem(FORMATS);
-      const time = await runGame(format);
-      times.push(time);
-    }
-    console.log(`AVG: ${times.reduce((p, c) => p + c)/times.length}`);
-  })();
+var format_ = 0;
+var numGames_ = 0;
+function getNextFormat() {
+  if (format_ > FORMATS.length) {
+    return false;
+  } else if (numGames_++ < NUM_GAMES) {
+    return RANDOM ? randomElem(FORMATS) : FORMATS[format_];
+  } else if (RANDOM) {
+    return false;
+  } else {
+    numGames_ = 1;
+    format_++;
+    return FORMATS[format_];
+  }
 }
+
+(async () => {
+  let begin = performance.now();
+  //let timers = [];
+  let games = [];
+
+  let format, lastFormat;
+  while ((format = getNextFormat())) {
+    if (!RANDOM && lastFormat && format != lastFormat) {
+      await Promise.all(games);
+
+      console.log(
+          `${lastFormat}: ${((performance.now() - begin)*1000).toFixed(2)}`);
+      //Timer.dump(timers);
+
+      //timers = [];
+      games = [];
+      begin = performance.now();
+    }
+
+    //const timer = new Timer();
+    const game = runGame(format); // , timer);
+    if (SEQUENTIAL) await game;
+
+    games.push(game);
+    //timers.push(timer);
+    lastFormat = format;
+  }
+
+  await Promise.all(games);
+
+  const prefix = RANDOM ? '' : `${lastFormat}: `;
+  console.log(`${prefix}${((performance.now() - begin)*1000).toFixed(2)}`);
+  //Timer.dump(timers);
+
+  console.log(`AVG: ${(await Promise.all(games)).reduce((p, c) => p + c)/games.length}`);
+})();
+
