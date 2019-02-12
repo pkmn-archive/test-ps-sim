@@ -12,9 +12,10 @@ const RandomPlayerAI = require('./random-ai');
 const psv = require('PSV');
 
 const NUM_GAMES = Number(process.argv[2]) || 100;
-const SILENT = true;
+const LOGS = false;
+const SILENT = false;
 const SEQUENTIAL = true;
-const RANDOM = true;
+const RANDOM = false;
 
 const FORMATS = [
     'gen7randombattle', //'gen7randomdoublesbattle',
@@ -51,7 +52,7 @@ async function runGame(format, timer) {
 
   let chunk;
   while ((chunk = await streams.omniscient.read())) {
-    if (SILENT) continue;
+    if (SILENT || !LOGS) continue;
 
     var output = '';
     for (var line of chunk.split('\n')) {
@@ -91,14 +92,15 @@ function getNextFormat() {
 
   let format, lastFormat;
   while ((format = getNextFormat())) {
-    console.log(format);
     if (!RANDOM && lastFormat && format != lastFormat) {
       await Promise.all(games);
 
-      //console.log(
-          //`${lastFormat}: ${((performance.now() - begin)*1000).toFixed(2)}`);
-      //console.log('===');
-      //Timer.dump(timers);
+      if (!SILENT) {
+        console.log(
+            `${lastFormat}: ${((performance.now() - begin)*1000).toFixed(2)}`);
+        console.log('===');
+        Timer.dump(timers);
+      }
 
       timers = [];
       games = [];
@@ -116,9 +118,11 @@ function getNextFormat() {
 
   await Promise.all(games);
 
-  const prefix = RANDOM ? 'ALL' : lastFormat;
-  //console.log(`${prefix}: ${((performance.now() - begin)*1000).toFixed(2)}`);
-  //console.log('===');
-  //Timer.dump(timers);
+  if (!SILENT) {
+    const prefix = RANDOM ? 'ALL' : lastFormat;
+    console.log(`${prefix}: ${((performance.now() - begin)*1000).toFixed(2)}`);
+    console.log('===');
+    Timer.dump(timers);
+  }
 })();
 
