@@ -23,24 +23,36 @@ const FORMATS = [
     'gen5randombattle', 'gen4randombattle', 'gen3randombattle',
     'gen2randombattle', 'gen1randombattle' ];
 
+
+function generateTeam(format, timer) {
+  let t = timer.time('generateTeam');
+  let team = Dex.packTeam(Dex.generateTeam(format));
+  return t(team);
+}
+
 async function runGame(format, timer) {
   let t = timer.time('prepare');
+  let s = timer.time('createStream');
   const streams = BattleStreams.getPlayerStreams(new BattleStreams.BattleStream({timer}));
+  s();
 
   const spec = {
     formatid: format,
   };
+
   const p1spec = {
     name: "Bot 1",
-    team: Dex.packTeam(Dex.generateTeam(format)),
+    team: generateTeam(format, timer),
   };
   const p2spec = {
     name: "Bot 2",
-    team: Dex.packTeam(Dex.generateTeam(format)),
+    team: generateTeam(format, timer),
   };
 
+  let u = timer.time('randomAIs');
   const p1 = new RandomPlayerAI(streams.p1);
   const p2 = new RandomPlayerAI(streams.p2);
+  u();
 
   t();
   streams.omniscient.write(`>start ${JSON.stringify(spec)}
