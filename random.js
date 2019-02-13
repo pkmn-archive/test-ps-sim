@@ -9,7 +9,7 @@ const Timer = require('../Pokemon-Showdown/sim/timer');
 const PRNG = require('../Pokemon-Showdown/sim/prng');
 const Dex = require('../Pokemon-Showdown/sim/dex');
 const RandomPlayerAI = require('./random-ai');
-const psv = require('PSV');
+const psv = require('@pkmn.cc/view');
 
 const NUM_GAMES = Number(process.argv[2]) || 100;
 const LOGS = false;
